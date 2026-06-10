@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DigitDetox</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ── original variables ── */
+:root{
+  --bg:#07070e;--card:#0f0f1c;--border:#1a1a2e;
+  --accent:#7c3aed;--accent2:#0ea5e9;
+  --green:#10b981;--yellow:#f59e0b;--red:#ef4444;
+  --text:#f1f5f9;--muted:#475569;
+  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;transition:background .5s,color .4s;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 800px 400px at 50% -10%,rgba(124,58,237,.08),transparent 60%);}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);
+  background-size:56px 56px;}
+.wrap{max-width:1080px;margin:0 auto;padding:36px 20px;position:relative;z-index:1;}
+
+/* ── original header ── */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
+.logo{display:flex;align-items:center;gap:14px;}
+.logo-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 28px rgba(124,58,237,.3);}
+.logo-name{font-size:28px;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,#c4b5fd,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-sub{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:3px;text-transform:uppercase;margin-top:3px;}
+.badges{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;
+  font-size:10px;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:1px;cursor:pointer;}
+.badge-live{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.28);color:var(--green);}
+.badge-demo{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.22);color:var(--yellow);}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+/* ── original tabs ── */
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:5px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:9px 22px;border-radius:8px;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;cursor:pointer;border:none;
+  background:transparent;color:var(--muted);font-family:var(--font);transition:all .2s;}
+.tab.active{background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff;
+  box-shadow:0 4px 14px rgba(124,58,237,.3);}
+
+/* ── original risk gauge ── */
+.risk-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:28px 32px;margin-bottom:20px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+  position:relative;overflow:hidden;}
+.risk-card::after{content:'';position:absolute;bottom:-50px;right:-50px;width:180px;height:180px;
+  background:radial-gradient(circle,rgba(14,165,233,.07),transparent 70%);pointer-events:none;}
+.gauge-wrap{position:relative;width:148px;height:148px;flex-shrink:0;}
+.gauge-wrap svg{transform:rotate(-90deg);}
+.g-bg{fill:none;stroke:var(--border);stroke-width:10;}
+.g-fill{fill:none;stroke-width:10;stroke-linecap:round;stroke-dasharray:404;stroke-dashoffset:404;transition:all 1.2s ease;}
+.g-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.g-num{font-size:38px;font-weight:800;font-family:var(--mono);line-height:1;}
+.g-sub{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:3px;}
+.risk-info{flex:1;min-width:200px;}
+.risk-title{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:5px;}
+.risk-conf{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:10px;}
+.risk-msg{font-size:14px;line-height:1.65;color:#94a3b8;margin-bottom:12px;}
+.combined{background:#12122080;border:1px solid var(--border);border-radius:10px;
+  padding:10px 16px;font-family:var(--mono);font-size:12px;display:inline-block;}
+.combined span{color:var(--accent2);}
+
+/* ── original panels / cols ── */
+.panel{display:none;}.panel.active{display:block;}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:660px){.cols{grid-template-columns:1fr;}}
+.col{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;}
+.single-col{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px;max-width:560px;}
+.col-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.col-icon{font-size:20px;}
+.col-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);}
+.row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.row:last-of-type{border-bottom:none;}
+.row-name{font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:8px;}
+.row-icon{font-size:13px;width:18px;text-align:center;}
+.row-val{font-size:20px;font-weight:800;font-family:var(--mono);}
+.apps-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin:16px 0 12px;}
+.app-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.app-rank{font-size:10px;color:var(--muted);font-family:var(--mono);width:16px;flex-shrink:0;}
+.app-name{font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-wrap{width:70px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.bar{height:100%;border-radius:2px;transition:width .8s ease;}
+.bar.laptop{background:linear-gradient(90deg,#7c3aed,#0ea5e9);}
+.bar.phone{background:linear-gradient(90deg,#059669,#0ea5e9);}
+.app-meta{font-size:11px;font-family:var(--mono);color:var(--muted);width:55px;text-align:right;flex-shrink:0;}
+
+/* ── original manual calc ── */
+.calc-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:20px;}
+.calc-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:20px;}
+.calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:580px){.calc-grid{grid-template-columns:repeat(2,1fr);}}
+.field label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-family:var(--mono);}
+.field input,.field select{width:100%;background:#0a0a16;border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input::placeholder{color:var(--muted);}
+.calc-btn{width:100%;padding:13px;border:none;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff;
+  font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;transition:opacity .2s,transform .1s;}
+.calc-btn:hover{opacity:.88;transform:translateY(-1px);}
+.calc-result{margin-top:16px;padding:16px;background:#0a0a1680;border:1px solid var(--border);border-radius:12px;display:none;}
+.calc-result-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+.calc-result-row:last-child{border-bottom:none;}
+.calc-result-label{font-size:13px;color:#94a3b8;}
+.calc-result-val{font-size:18px;font-weight:800;font-family:var(--mono);}
+.err{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:12px 16px;color:#fca5a5;font-size:13px;margin-bottom:18px;display:none;}
+.footer{text-align:center;font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:16px;}
+#ts{color:var(--accent2);}
+.c-low{color:var(--green);}.c-mod{color:var(--yellow);}.c-high{color:var(--red);}
+
+/* ══════════════════════════════════════
+   LIGHT MODE
+══════════════════════════════════════ */
+body.light{
+  --bg:#f0f4ff;--card:#ffffff;--border:#dde4f0;
+  --text:#1e1e2e;--muted:#64748b;
+}
+body.light::before,body.light::after{opacity:.15;}
+
+/* ══════════════════════════════════════
+   DARK MODE BANNER
+══════════════════════════════════════ */
+#dm-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;padding:10px 20px;font-size:13px;font-family:var(--mono);
+  align-items:center;justify-content:space-between;gap:12px;}
+#dm-banner.show{display:flex;}
+#dm-banner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+  color:#fff;border-radius:6px;padding:4px 14px;cursor:pointer;font-family:var(--mono);font-size:11px;}
+
+/* ══════════════════════════════════════
+   EMOTION PANEL
+══════════════════════════════════════ */
+.emo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:700px){.emo-grid{grid-template-columns:1fr;}}
+.emo-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;}
+
+/* live status dot */
+.emo-status{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:11px;font-family:var(--mono);color:var(--muted);}
+.emo-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.emo-dot.on{background:var(--green);animation:blink 1.5s infinite;}
+
+/* big emotion display */
+.emo-big{text-align:center;padding:16px 0 12px;}
+.emo-emoji{font-size:64px;line-height:1;display:block;margin-bottom:8px;}
+.emo-name{font-size:26px;font-weight:800;text-transform:capitalize;margin-bottom:4px;}
+.emo-conf{font-size:11px;font-family:var(--mono);color:var(--muted);}
+
+/* emotion bars */
+.emo-bars{margin-top:14px;}
+.emo-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.emo-bar-label{font-size:12px;font-family:var(--mono);width:72px;flex-shrink:0;color:var(--muted);}
+.emo-bar-track{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.emo-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+.emo-bar-pct{font-size:11px;font-family:var(--mono);width:36px;text-align:right;color:var(--muted);}
+
+/* history */
+.emo-history{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.emo-hist-title{font-size:10px;font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.emo-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.emo-chip{font-size:18px;padding:2px;border-radius:5px;background:var(--border);}
+
+/* alert banner */
+.emo-alert{display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  border-radius:10px;padding:10px 14px;margin-top:12px;font-size:12px;color:#fca5a5;font-family:var(--mono);}
+.emo-alert.show{display:block;}
+
+/* insight box */
+.emo-insight{margin-top:12px;background:#0a0a1640;border:1px solid var(--border);
+  border-radius:10px;padding:12px;font-size:12px;line-height:1.7;color:#94a3b8;font-family:var(--mono);}
+
+/* distance bar */
+.dist-wrap{margin-top:16px;}
+.dist-label{font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:6px;}
+.dist-track{position:relative;height:14px;background:var(--border);border-radius:7px;overflow:visible;}
+.dist-good{position:absolute;top:0;height:100%;background:rgba(16,185,129,.25);border-radius:7px;}
+.dist-dot{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);transition:left .3s ease,background .3s;}
+.dist-text{font-size:11px;font-family:var(--mono);margin-top:5px;font-weight:700;}
+
+/* ══════════════════════════════════════
+   POMODORO PANEL
+══════════════════════════════════════ */
+.pomo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:700px){.pomo-grid{grid-template-columns:1fr;}}
+.pomo-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;text-align:center;}
+.pomo-phase-lbl{font-size:10px;font-family:var(--mono);letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.pomo-ring-wrap{position:relative;width:160px;height:160px;margin:0 auto 18px;}
+.pomo-ring-wrap svg{transform:rotate(-90deg);}
+.pr-bg{fill:none;stroke:var(--border);stroke-width:8;}
+.pr-fill{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:452;stroke-dashoffset:452;transition:stroke-dashoffset .6s linear;}
+.pomo-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.pomo-time{font-size:32px;font-weight:800;font-family:var(--mono);}
+.pomo-phase-sm{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:3px;}
+.pomo-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.pomo-stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;}
+.pomo-stat-v{font-size:22px;font-weight:800;font-family:var(--mono);color:var(--accent2);}
+.pomo-stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;}
+.pomo-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.pbtn{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-family:var(--font);
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;transition:all .2s;}
+.pbtn-p{background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.3);}
+.pbtn-s{background:var(--border);color:var(--muted);}
+.pbtn:hover{opacity:.85;transform:translateY(-1px);}
+.pomo-side{display:flex;flex-direction:column;gap:14px;}
+.pomo-settings,.pomo-log-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;}
+.pomo-set-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.session-entry{display:flex;align-items:center;justify-content:space-between;
+  padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;font-family:var(--mono);}
+.session-entry:last-child{border-bottom:none;}
+.se-type{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;}
+.se-work{background:rgba(124,58,237,.15);color:#c4b5fd;}
+.se-break{background:rgba(16,185,129,.15);color:#6ee7b7;}
+.se-long{background:rgba(14,165,233,.15);color:#7dd3fc;}
+
+/* ══════════════════════════════════════
+   DARK MODE SETTINGS PANEL
+══════════════════════════════════════ */
+.dm-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:20px;}
+.dm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.dm-info{font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.8;}
+.dm-info span{color:var(--accent2);}
+</style>
+</head>
+<body>
+
+<!-- Auto dark mode banner -->
+<div id="dm-banner">
+  <span id="dm-msg">🌙 Screen time limit reached!</span>
+  <button onclick="dmDismiss()">Dismiss</button>
+</div>
+
+<div class="wrap" id="wrap">
+
+  <!-- ── HEADER ── -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">📵</div>
+      <div>
+        <div class="logo-name">DigitDetox</div>
+        <div class="logo-sub">Laptop + Phone Tracker</div>
+      </div>
+    </div>
+    <div class="badges">
+      <div id="bl" class="badge badge-demo"><span class="dot"></span><span>💻 Laptop Demo</span></div>
+      <div id="bp" class="badge badge-demo"><span class="dot"></span><span>📱 Phone Demo</span></div>
+      <div id="emo-badge" class="badge badge-demo" title="Emotion tracker status"><span class="dot"></span><span id="emo-badge-txt">😐 Offline</span></div>
+      <div class="badge badge-demo" onclick="dmToggle()" title="Toggle dark/light mode" style="cursor:pointer;">
+        <span id="dm-icon">🌙</span>&nbsp;<span id="dm-lbl">Dark</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABS ── -->
+  <div class="tabs">
+    <button class="tab active" id="tab-both"     onclick="switchTab('both')">💻📱 Both</button>
+    <button class="tab"        id="tab-laptop"   onclick="switchTab('laptop')">💻 Laptop</button>
+    <button class="tab"        id="tab-phone"    onclick="switchTab('phone')">📱 Phone</button>
+    <button class="tab"        id="tab-manual"   onclick="switchTab('manual')">✏️ Manual</button>
+    <button class="tab"        id="tab-emotion"  onclick="switchTab('emotion')">😊 Emotions</button>
+    <button class="tab"        id="tab-pomodoro" onclick="switchTab('pomodoro')">⏱ Pomodoro</button>
+    <button class="tab"        id="tab-darkmode" onclick="switchTab('darkmode')">🌙 Dark Mode</button>
+  </div>
+
+  <div id="err" class="err">⚠ Cannot connect to backend. Run <code>python app.py</code> in backend folder.</div>
+
+  <!-- ── RISK GAUGE (always visible) ── -->
+  <div class="risk-card">
+    <div class="gauge-wrap">
+      <svg width="148" height="148" viewBox="0 0 148 148">
+        <circle class="g-bg"   cx="74" cy="74" r="64"/>
+        <circle class="g-fill" cx="74" cy="74" r="64" id="gauge"/>
+      </svg>
+      <div class="g-center">
+        <div class="g-num" id="score">—</div>
+        <div class="g-sub">Risk</div>
+      </div>
+    </div>
+    <div class="risk-info">
+      <div class="risk-title" id="label">Analyzing…</div>
+      <div class="risk-conf"  id="conf">Confidence: —</div>
+      <div class="risk-msg"   id="rmsg">Start bridges to see real data.</div>
+      <div class="combined">Combined Screen Time: <span id="combined">—</span></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: BOTH ══════════ -->
+  <div class="panel active" id="panel-both">
+    <div class="cols">
+      <div class="col">
+        <div class="col-head"><div class="col-icon">💻</div><div class="col-title">Laptop</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">🖥</span>Screen Hrs</div><div class="row-val" id="l-screen">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">🔔</span>Notifications</div><div class="row-val" id="l-notifs">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">🌙</span>Night Hrs</div><div class="row-val" id="l-night">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">⚡</span>Active Apps</div><div class="row-val" id="l-opens">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">📲</span>Social Hrs</div><div class="row-val" id="l-social">—</div></div>
+        <div class="apps-title">Top Apps</div>
+        <div id="l-apps"><div style="color:var(--muted);font-size:13px;">No data yet</div></div>
+      </div>
+      <div class="col">
+        <div class="col-head"><div class="col-icon">📱</div><div class="col-title">Phone</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">📱</span>Screen Hrs</div><div class="row-val" id="p-screen">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">🔓</span>Unlocks</div><div class="row-val" id="p-unlocks">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">🔔</span>Notifications</div><div class="row-val" id="p-notifs">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">🌙</span>Night Hrs</div><div class="row-val" id="p-night">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">⚡</span>App Opens</div><div class="row-val" id="p-opens">—</div></div>
+        <div class="row"><div class="row-name"><span class="row-icon">📲</span>Social Hrs</div><div class="row-val" id="p-social">—</div></div>
+        <div class="apps-title">Top Apps</div>
+        <div id="p-apps"><div style="color:var(--muted);font-size:13px;">No data yet</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: LAPTOP ══════════ -->
+  <div class="panel" id="panel-laptop">
+    <div class="single-col">
+      <div class="col-head"><div class="col-icon">💻</div><div class="col-title">Laptop Usage</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">🖥</span>Screen Hrs</div><div class="row-val" id="ll-screen">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">🔔</span>Notifications</div><div class="row-val" id="ll-notifs">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">🌙</span>Night Hrs</div><div class="row-val" id="ll-night">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">⚡</span>Active Apps</div><div class="row-val" id="ll-opens">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">📲</span>Social Hrs</div><div class="row-val" id="ll-social">—</div></div>
+      <div class="apps-title">Top Apps</div>
+      <div id="ll-apps"><div style="color:var(--muted);font-size:13px;">No data yet</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: PHONE ══════════ -->
+  <div class="panel" id="panel-phone">
+    <div class="single-col">
+      <div class="col-head"><div class="col-icon">📱</div><div class="col-title">Phone Usage</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">📱</span>Screen Hrs</div><div class="row-val" id="pp-screen">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">🔓</span>Unlocks</div><div class="row-val" id="pp-unlocks">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">🔔</span>Notifications</div><div class="row-val" id="pp-notifs">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">🌙</span>Night Hrs</div><div class="row-val" id="pp-night">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">⚡</span>App Opens</div><div class="row-val" id="pp-opens">—</div></div>
+      <div class="row"><div class="row-name"><span class="row-icon">📲</span>Social Hrs</div><div class="row-val" id="pp-social">—</div></div>
+      <div class="apps-title">Top Apps</div>
+      <div id="pp-apps"><div style="color:var(--muted);font-size:13px;">No data yet</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: MANUAL ══════════ -->
+  <div class="panel" id="panel-manual">
+    <div class="calc-card">
+      <div class="calc-title">✏️ Manual Addiction Calculator</div>
+      <div class="calc-grid">
+        <div class="field"><label>Screen Hrs (total)</label><input type="number" id="c-screen" placeholder="e.g. 6.5" step="0.1" min="0"/></div>
+        <div class="field"><label>Phone Unlocks</label><input type="number" id="c-unlocks" placeholder="e.g. 80" min="0"/></div>
+        <div class="field"><label>Notifications</label><input type="number" id="c-notifs" placeholder="e.g. 120" min="0"/></div>
+        <div class="field"><label>Night Hrs (after 10pm)</label><input type="number" id="c-night" placeholder="e.g. 1.5" step="0.1" min="0"/></div>
+        <div class="field"><label>App Opens</label><input type="number" id="c-opens" placeholder="e.g. 200" min="0"/></div>
+        <div class="field"><label>Social Media Hrs</label><input type="number" id="c-social" placeholder="e.g. 3.0" step="0.1" min="0"/></div>
+      </div>
+      <button class="calc-btn" onclick="manualCalc()">Calculate Addiction Risk</button>
+      <div class="calc-result" id="calc-result">
+        <div class="calc-result-row"><div class="calc-result-label">Risk Level</div><div class="calc-result-val" id="cr-label">—</div></div>
+        <div class="calc-result-row"><div class="calc-result-label">Risk Score</div><div class="calc-result-val" id="cr-score">—</div></div>
+        <div class="calc-result-row"><div class="calc-result-label">Confidence</div><div class="calc-result-val" id="cr-conf">—</div></div>
+        <div class="calc-result-row"><div class="calc-result-label">Verdict</div><div class="calc-result-val" id="cr-msg" style="font-size:13px;color:#94a3b8;text-align:right;max-width:60%;">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: EMOTIONS ══════════ -->
+  <div class="panel" id="panel-emotion">
+    <div class="emo-grid">
+
+      <!-- left: live readout -->
+      <div class="emo-card">
+        <div class="col-head"><div class="col-icon">🧠</div><div class="col-title">Cognitive Drift</div></div>
+        <div class="emo-status">
+          <div class="emo-dot" id="emo-dot"></div>
+          <span id="emo-status-txt">Waiting for emotion_tracker.py…</span>
+        </div>
+        <div class="emo-big">
+          <span class="emo-emoji" id="emo-emoji">😐</span>
+          <div class="emo-name"  id="emo-name">neutral</div>
+          <div class="emo-conf"  id="emo-conf">Confidence: —</div>
+        </div>
+        <div class="emo-bars" id="emo-bars">
+          <!-- filled by JS -->
+        </div>
+        <div class="emo-alert" id="emo-alert">
+          ⚠️ Negative emotion sustained — consider a Pomodoro break!
+        </div>
+      </div>
+
+      <!-- right: history + distance + insight -->
+      <div class="emo-card">
+        <div class="col-head"><div class="col-icon">📊</div><div class="col-title">Session Stats</div></div>
+
+        <div class="dist-wrap">
+          <div class="dist-label" id="dist-label">Distance: —</div>
+          <div class="dist-track" id="dist-track">
+            <div class="dist-good" id="dist-good"></div>
+            <div class="dist-dot"  id="dist-dot" style="left:0%;background:var(--muted);"></div>
+          </div>
+          <div class="dist-text" id="dist-text" style="color:var(--muted);">Start emotion_tracker.py to see distance</div>
+        </div>
+
+        <div class="emo-history" style="margin-top:18px;">
+          <div class="emo-hist-title">Recent History</div>
+          <div class="emo-chips" id="emo-chips"></div>
+        </div>
+
+        <!-- session counts -->
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px;" id="emo-counts">
+          <div class="pomo-stat" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+            <div class="pomo-stat-v" id="ec-happy" style="color:#10b981;">0</div>
+            <div class="pomo-stat-l">😄 Happy</div>
+          </div>
+          <div class="pomo-stat" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+            <div class="pomo-stat-v" id="ec-sad" style="color:#60a5fa;">0</div>
+            <div class="pomo-stat-l">😢 Sad</div>
+          </div>
+          <div class="pomo-stat" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+            <div class="pomo-stat-v" id="ec-angry" style="color:#ef4444;">0</div>
+            <div class="pomo-stat-l">😠 Angry</div>
+          </div>
+          <div class="pomo-stat" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+            <div class="pomo-stat-v" id="ec-neutral" style="color:#94a3b8;">0</div>
+            <div class="pomo-stat-l">😐 Neutral</div>
+          </div>
+        </div>
+
+        <div class="emo-insight" id="emo-insight">
+          Run <code>python emotion_tracker.py</code> to start cognitive drift detection. Detects happy, sad, angry, neutral in real time using MediaPipe Face Mesh.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: POMODORO ══════════ -->
+  <div class="panel" id="panel-pomodoro">
+    <div class="pomo-grid">
+      <div class="pomo-card">
+        <div class="pomo-phase-lbl" id="pomo-phase-lbl">🧠 Focus Session</div>
+        <div class="pomo-ring-wrap">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <defs>
+              <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#7c3aed"/>
+                <stop offset="100%" stop-color="#0ea5e9"/>
+              </linearGradient>
+            </defs>
+            <circle class="pr-bg"  cx="80" cy="80" r="72"/>
+            <circle class="pr-fill" cx="80" cy="80" r="72" id="pomo-ring" style="stroke:url(#pg);"/>
+          </svg>
+          <div class="pomo-center">
+            <div class="pomo-time"     id="pomo-time">25:00</div>
+            <div class="pomo-phase-sm" id="pomo-phase-sm">Focus</div>
+          </div>
+        </div>
+        <div class="pomo-stats">
+          <div class="pomo-stat"><div class="pomo-stat-v" id="ps-sessions">0</div><div class="pomo-stat-l">Sessions</div></div>
+          <div class="pomo-stat"><div class="pomo-stat-v" id="ps-streak">0</div><div class="pomo-stat-l">Streak</div></div>
+          <div class="pomo-stat"><div class="pomo-stat-v" id="ps-mins">0</div><div class="pomo-stat-l">Mins Today</div></div>
+        </div>
+        <div class="pomo-btns">
+          <button class="pbtn pbtn-p" id="pomo-btn" onclick="pomoToggle()">▶ Start</button>
+          <button class="pbtn pbtn-s" onclick="pomoReset()">↺ Reset</button>
+          <button class="pbtn pbtn-s" onclick="pomoSkip()">⏭ Skip</button>
+        </div>
+      </div>
+      <div class="pomo-side">
+        <div class="pomo-settings">
+          <div class="col-head"><div class="col-icon">⚙️</div><div class="col-title">Settings</div></div>
+          <div class="pomo-set-grid">
+            <div class="field"><label>Focus (min)</label><input type="number" id="pw-dur" value="25" min="1" max="90" onchange="pomoApply()"/></div>
+            <div class="field"><label>Short Break</label><input type="number" id="ps-dur" value="5"  min="1" max="30" onchange="pomoApply()"/></div>
+            <div class="field"><label>Long Break</label><input type="number" id="pl-dur" value="15" min="5" max="60" onchange="pomoApply()"/></div>
+            <div class="field"><label>Sessions→Long</label><input type="number" id="pl-ev"  value="4"  min="2" max="10" onchange="pomoApply()"/></div>
+          </div>
+          <div class="field"><label>Auto-start</label>
+            <select id="pomo-auto">
+              <option value="0">Manual</option>
+              <option value="1">Auto all</option>
+              <option value="2">Auto breaks</option>
+            </select>
+          </div>
+        </div>
+        <div class="pomo-log-card">
+          <div class="col-head"><div class="col-icon">📋</div><div class="col-title">Session Log</div></div>
+          <div id="pomo-log"><div style="color:var(--muted);font-size:12px;font-family:var(--mono);">No sessions yet.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ PANEL: DARK MODE ══════════ -->
+  <div class="panel" id="panel-darkmode">
+    <div class="dm-card">
+      <div class="col-head"><div class="col-icon">🌙</div><div class="col-title">Auto Dark Mode</div></div>
+      <div class="dm-grid">
+        <div class="field"><label>Screen Time Limit (hrs)</label>
+          <input type="number" id="dm-limit" value="4" min="0.5" max="16" step="0.5" onchange="dmApply()"/></div>
+        <div class="field"><label>Action at Limit</label>
+          <select id="dm-action" onchange="dmApply()">
+            <option value="banner">Banner only</option>
+            <option value="switch">Switch dark mode</option>
+            <option value="both" selected>Banner + dark mode</option>
+          </select>
+        </div>
+      </div>
+      <div class="dm-info">
+        Current screen time: <span id="dm-current">—</span> &nbsp;·&nbsp;
+        Limit: <span id="dm-limit-txt">4.0 hrs</span> &nbsp;·&nbsp;
+        Status: <span id="dm-status">monitoring</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Auto-refreshes every 30s · Last updated: <span id="ts">never</span></div>
+</div><!-- end wrap -->
+
+<script>
+const B   = "http://localhost:5000";
+const EMO = "http://localhost:5001";
+
+// ════════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════════
+function switchTab(n){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  document.getElementById('tab-'+n).classList.add('active');
+}
+
+// ════════════════════════════════════════
+//  HELPERS (original)
+// ════════════════════════════════════════
+function rc(l){
+  if(!l)return'';const s=l.toLowerCase();
+  return s.includes('low')?'c-low':s.includes('mod')?'c-mod':'c-high';
+}
+function color(s){return s<35?'#10b981':s<65?'#f59e0b':'#ef4444';}
+function rmsg(l){
+  if(!l)return'';const s=l.toLowerCase();
+  if(s.includes('low'))return'Your combined device usage looks healthy. Great balance!';
+  if(s.includes('mod'))return'Moderate risk. Try scheduled screen breaks across devices.';
+  return'High addiction risk! Too much screen time. Time for a digital detox.';
+}
+function setGauge(score){
+  const c=document.getElementById('gauge');
+  c.style.strokeDashoffset=404-(score/100)*404;
+  c.style.stroke=color(score);
+}
+function setBadge(id,live,label){
+  const el=document.getElementById(id);
+  el.className='badge '+(live?'badge-live':'badge-demo');
+  el.innerHTML=`<span class="dot"></span><span>${label} ${live?'Live':'Demo'}</span>`;
+}
+function renderApps(id,list,type){
+  const el=document.getElementById(id);
+  if(!list||!list.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;">No data yet</div>';return;}
+  const max=list[0].mins||list[0].opens||1;
+  el.innerHTML=list.map((a,i)=>{
+    const v=a.mins!==undefined?a.mins:a.opens;
+    const u=a.mins!==undefined?'min':'opens';
+    return`<div class="app-row">
+      <div class="app-rank">${i+1}.</div>
+      <div class="app-name">${a.app}</div>
+      <div class="bar-wrap"><div class="bar ${type}" style="width:${Math.round(v/max*100)}%"></div></div>
+      <div class="app-meta">${v} ${u}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+//  MAIN DATA LOAD (original logic intact)
+// ════════════════════════════════════════
+let lastScreen = 0;
+async function load(){
+  try{
+    const r=await fetch(B+'/api/status');
+    if(!r.ok)throw new Error();
+    const d=await r.json();
+    document.getElementById('err').style.display='none';
+    const l=d.laptop||{},p=d.phone||{},pr=d.prediction||{};
+    setBadge('bl',l.source==='live','💻 Laptop');
+    setBadge('bp',p.source==='live','📱 Phone');
+    // both
+    document.getElementById('l-screen').textContent=(l.screen_time||0).toFixed(2);
+    document.getElementById('l-notifs').textContent=l.notifications||0;
+    document.getElementById('l-night').textContent=(l.night_usage||0).toFixed(2);
+    document.getElementById('l-opens').textContent=l.app_opens||0;
+    document.getElementById('l-social').textContent=(l.social_media||0).toFixed(2);
+    renderApps('l-apps',l.top_apps,'laptop');
+    document.getElementById('p-screen').textContent=(p.screen_time||0).toFixed(2);
+    document.getElementById('p-unlocks').textContent=p.screen_unlocks||0;
+    document.getElementById('p-notifs').textContent=p.notifications||0;
+    document.getElementById('p-night').textContent=(p.night_usage||0).toFixed(2);
+    document.getElementById('p-opens').textContent=p.app_opens||0;
+    document.getElementById('p-social').textContent=(p.social_media||0).toFixed(2);
+    renderApps('p-apps',p.top_apps,'phone');
+    // laptop only
+    document.getElementById('ll-screen').textContent=(l.screen_time||0).toFixed(2);
+    document.getElementById('ll-notifs').textContent=l.notifications||0;
+    document.getElementById('ll-night').textContent=(l.night_usage||0).toFixed(2);
+    document.getElementById('ll-opens').textContent=l.app_opens||0;
+    document.getElementById('ll-social').textContent=(l.social_media||0).toFixed(2);
+    renderApps('ll-apps',l.top_apps,'laptop');
+    // phone only
+    document.getElementById('pp-screen').textContent=(p.screen_time||0).toFixed(2);
+    document.getElementById('pp-unlocks').textContent=p.screen_unlocks||0;
+    document.getElementById('pp-notifs').textContent=p.notifications||0;
+    document.getElementById('pp-night').textContent=(p.night_usage||0).toFixed(2);
+    document.getElementById('pp-opens').textContent=p.app_opens||0;
+    document.getElementById('pp-social').textContent=(p.social_media||0).toFixed(2);
+    renderApps('pp-apps',p.top_apps,'phone');
+    // gauge
+    const cs=d.combined_screen||0;
+    lastScreen=cs;
+    const h=Math.floor(cs),m=Math.round((cs%1)*60);
+    document.getElementById('combined').textContent=`${cs.toFixed(2)} hrs (${h}h ${String(m).padStart(2,'0')}m)`;
+    document.getElementById('dm-current').textContent=cs.toFixed(2)+' hrs';
+    const score=pr.risk_score||0;
+    setGauge(score);
+    const cl=rc(pr.label);
+    document.getElementById('score').textContent=score;
+    document.getElementById('score').className='g-num '+cl;
+    document.getElementById('label').textContent=pr.label||'—';
+    document.getElementById('label').className='risk-title '+cl;
+    document.getElementById('conf').textContent='Confidence: '+(pr.confidence||0)+'%';
+    document.getElementById('rmsg').textContent=rmsg(pr.label);
+    document.getElementById('ts').textContent=new Date().toLocaleTimeString();
+    dmCheck(cs);
+  }catch(e){
+    document.getElementById('err').style.display='block';
+    document.getElementById('ts').textContent='offline';
+  }
+}
+
+// ════════════════════════════════════════
+//  MANUAL CALCULATOR (original)
+// ════════════════════════════════════════
+async function manualCalc(){
+  const body={
+    screen_time:    parseFloat(document.getElementById('c-screen').value)||0,
+    screen_unlocks: parseFloat(document.getElementById('c-unlocks').value)||0,
+    notifications:  parseFloat(document.getElementById('c-notifs').value)||0,
+    night_usage:    parseFloat(document.getElementById('c-night').value)||0,
+    app_opens:      parseFloat(document.getElementById('c-opens').value)||0,
+    social_media:   parseFloat(document.getElementById('c-social').value)||0,
+    longest_session:40,
+  };
+  try{
+    const r=await fetch(B+'/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    const cl=rc(d.label);
+    document.getElementById('cr-label').textContent=d.label||'—';
+    document.getElementById('cr-label').className='calc-result-val '+cl;
+    document.getElementById('cr-score').textContent=(d.risk_score||0)+' / 100';
+    document.getElementById('cr-score').className='calc-result-val '+cl;
+    document.getElementById('cr-conf').textContent=(d.confidence||0)+'%';
+    document.getElementById('cr-msg').textContent=rmsg(d.label);
+    document.getElementById('calc-result').style.display='block';
+    setGauge(d.risk_score||0);
+    document.getElementById('score').textContent=d.risk_score||0;
+    document.getElementById('score').className='g-num '+cl;
+    document.getElementById('label').textContent=d.label||'—';
+    document.getElementById('label').className='risk-title '+cl;
+    document.getElementById('conf').textContent='Confidence: '+(d.confidence||0)+'%';
+    document.getElementById('rmsg').textContent=rmsg(d.label);
+  }catch(e){alert('Cannot reach backend. Make sure python app.py is running.');}
+}
+
+// ════════════════════════════════════════
+//  EMOTION LIVE FEED  (polls localhost:5001)
+// ════════════════════════════════════════
+const EMO_COLORS={happy:'#10b981',sad:'#60a5fa',angry:'#ef4444',neutral:'#94a3b8'};
+const EMO_EMOJI ={happy:'😄',sad:'😢',angry:'😠',neutral:'😐'};
+const EMO_MSG   ={
+  happy:  '😄 You look happy! Great state for focused work.',
+  sad:    '😢 Feeling low? Consider a short Pomodoro break.',
+  angry:  '😠 Frustration detected. A 5-min walk helps.',
+  neutral:'😐 Neutral — steady. Good for routine tasks.',
+};
+
+let emoCounts={happy:0,sad:0,angry:0,neutral:0};
+let emoHistory=[];
+let emoNegStreak=0;
+
+async function loadEmotion(){
+  try{
+    const r=await fetch(EMO+'/emotion',{signal:AbortSignal.timeout(2000)});
+    if(!r.ok)throw new Error();
+    const d=await r.json();
+
+    const emo  = d.emotion||'neutral';
+    const pct  = d.pct||{};
+    const face = d.face||false;
+    const dist = d.distance||'';
+    const conf = pct[emo]||0;
+
+    // badge in header
+    const badge=document.getElementById('emo-badge');
+    badge.className='badge badge-live';
+    document.getElementById('emo-badge-txt').textContent=`${EMO_EMOJI[emo]||'😐'} ${emo}`;
+
+    // status dot
+    document.getElementById('emo-dot').className='emo-dot'+(face?' on':'');
+    document.getElementById('emo-status-txt').textContent=
+      face?`Tracking — face detected`:`No face detected`;
+
+    // big display
+    document.getElementById('emo-emoji').textContent=EMO_EMOJI[emo]||'😐';
+    document.getElementById('emo-name').textContent=emo;
+    document.getElementById('emo-name').style.color=EMO_COLORS[emo]||'var(--text)';
+    document.getElementById('emo-conf').textContent=`Confidence: ${(conf*100).toFixed(0)}%`;
+
+    // bars — all 4 always shown
+    const order=['happy','sad','angry','neutral'];
+    document.getElementById('emo-bars').innerHTML=order.map(e=>{
+      const v=pct[e]||0;
+      return`<div class="emo-bar-row">
+        <div class="emo-bar-label">${EMO_EMOJI[e]} ${e}</div>
+        <div class="emo-bar-track">
+          <div class="emo-bar-fill" style="width:${(v*100).toFixed(1)}%;background:${EMO_COLORS[e]};"></div>
+        </div>
+        <div class="emo-bar-pct">${(v*100).toFixed(0)}%</div>
+      </div>`;
+    }).join('');
+
+    // history chips
+    emoHistory.unshift(emo);
+    if(emoHistory.length>20)emoHistory.pop();
+    document.getElementById('emo-chips').innerHTML=
+      emoHistory.map(e=>`<span class="emo-chip" title="${e}">${EMO_EMOJI[e]||'😐'}</span>`).join('');
+
+    // session counts
+    if(face)emoCounts[emo]=(emoCounts[emo]||0)+1;
+    document.getElementById('ec-happy').textContent=emoCounts.happy;
+    document.getElementById('ec-sad').textContent=emoCounts.sad;
+    document.getElementById('ec-angry').textContent=emoCounts.angry;
+    document.getElementById('ec-neutral').textContent=emoCounts.neutral;
+
+    // negative streak alert
+    const NEG=['sad','angry'];
+    if(NEG.includes(emo)&&face)emoNegStreak++;
+    else emoNegStreak=Math.max(0,emoNegStreak-1);
+    document.getElementById('emo-alert').classList.toggle('show',emoNegStreak>=5);
+
+    // insight
+    document.getElementById('emo-insight').textContent=
+      face?(EMO_MSG[emo]||''):'Run python emotion_tracker.py to start tracking.';
+
+    // distance bar
+    updateDistBar(dist,d.face_w||0);
+
+  }catch(e){
+    // tracker offline
+    document.getElementById('emo-badge').className='badge badge-demo';
+    document.getElementById('emo-badge-txt').textContent='😐 Offline';
+    document.getElementById('emo-dot').className='emo-dot';
+    document.getElementById('emo-status-txt').textContent='emotion_tracker.py not running';
+    document.getElementById('emo-insight').textContent=
+      'Run python emotion_tracker.py to start cognitive drift detection.';
+    updateDistBar('offline',0);
+  }
+}
+
+function updateDistBar(label,fw){
+  const CLOSE=290,FAR=110,OKL=150,OKH=265;
+  const track=document.getElementById('dist-track');
+  const good =document.getElementById('dist-good');
+  const dot  =document.getElementById('dist-dot');
+  const txt  =document.getElementById('dist-text');
+  const lbl  =document.getElementById('dist-label');
+
+  // good zone markers
+  const tw=track.offsetWidth||300;
+  good.style.left =(OKL/CLOSE*100)+'%';
+  good.style.width=((OKH-OKL)/CLOSE*100)+'%';
+
+  lbl.textContent='Distance: '+label;
+
+  if(fw<=0){
+    dot.style.left='0%'; dot.style.background='var(--muted)';
+    txt.textContent=label; txt.style.color='var(--muted)'; return;
+  }
+  const pct=Math.min(fw,CLOSE)/CLOSE*100;
+  dot.style.left=pct+'%';
+
+  let col='var(--muted)',msg=label;
+  if(fw>CLOSE){col='#ef4444';msg='Too close — move back';}
+  else if(fw<FAR){col='#f59e0b';msg='Too far — move closer';}
+  else if(fw>=OKL&&fw<=OKH){col='#10b981';msg='✓ Perfect distance';}
+  else if(fw<OKL){col='#0ea5e9';msg='Move a bit closer';}
+  else{col='#0ea5e9';msg='Move a bit back';}
+
+  dot.style.background=col;
+  txt.textContent=msg;
+  txt.style.color=col;
+}
+
+// ════════════════════════════════════════
+//  AUTO DARK MODE
+// ════════════════════════════════════════
+let dmDark=true, dmDismissed=false;
+
+function dmApply(){
+  const lim=parseFloat(document.getElementById('dm-limit').value)||4;
+  document.getElementById('dm-limit-txt').textContent=lim.toFixed(1)+' hrs';
+}
+function dmCheck(screen){
+  const lim=parseFloat(document.getElementById('dm-limit').value)||4;
+  const act=document.getElementById('dm-action').value;
+  if(screen>=lim&&!dmDismissed){
+    document.getElementById('dm-status').textContent='⚠ limit reached';
+    if(act==='banner'||act==='both'){
+      document.getElementById('dm-banner').classList.add('show');
+      document.getElementById('wrap').style.paddingTop='60px';
+      document.getElementById('dm-msg').textContent=
+        `🌙 Screen time limit reached: ${screen.toFixed(1)}h / ${lim}h — rest your eyes!`;
+    }
+    if(act==='switch'||act==='both') setDark(true);
+  } else {
+    document.getElementById('dm-status').textContent='monitoring';
+  }
+}
+function dmDismiss(){
+  dmDismissed=true;
+  document.getElementById('dm-banner').classList.remove('show');
+  document.getElementById('wrap').style.paddingTop='';
+}
+function setDark(on){
+  dmDark=on;
+  document.body.classList.toggle('light',!on);
+  document.getElementById('dm-icon').textContent=on?'🌙':'☀️';
+  document.getElementById('dm-lbl').textContent=on?'Dark':'Light';
+}
+function dmToggle(){ setDark(!dmDark); if(!dmDark)dmDismissed=true; }
+
+// ════════════════════════════════════════
+//  POMODORO
+// ════════════════════════════════════════
+const P={phase:'work',running:false,remaining:25*60,total:25*60,
+         sessions:0,streak:0,totalMins:0,log:[],iv:null};
+
+function pDur(){
+  return{
+    work: parseInt(document.getElementById('pw-dur').value||25)*60,
+    short:parseInt(document.getElementById('ps-dur').value||5)*60,
+    long: parseInt(document.getElementById('pl-dur').value||15)*60,
+  };
+}
+function pomoApply(){if(!P.running){const d=pDur();P.total=P.remaining=d[P.phase];pRender();}}
+function pFmt(s){const m=Math.floor(s/60),ss=s%60;return`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+
+function pRender(){
+  document.getElementById('pomo-time').textContent=pFmt(P.remaining);
+  const pct=P.total>0?1-P.remaining/P.total:0;
+  document.getElementById('pomo-ring').style.strokeDashoffset=452-pct*452;
+  const lbl={work:'Focus',short:'Short Break',long:'Long Break'};
+  const ico={work:'🧠',short:'☕',long:'🛋️'};
+  document.getElementById('pomo-phase-lbl').textContent=ico[P.phase]+' '+lbl[P.phase];
+  document.getElementById('pomo-phase-sm').textContent=lbl[P.phase];
+  document.getElementById('ps-sessions').textContent=P.sessions;
+  document.getElementById('ps-streak').textContent=P.streak;
+  document.getElementById('ps-mins').textContent=Math.round(P.totalMins);
+}
+
+function pomoToggle(){
+  if(P.running){
+    clearInterval(P.iv);P.running=false;
+    document.getElementById('pomo-btn').textContent='▶ Resume';
+  }else{
+    P.running=true;
+    document.getElementById('pomo-btn').textContent='⏸ Pause';
+    P.iv=setInterval(()=>{P.remaining--;if(P.remaining<=0)pomoEnd();pRender();},1000);
+  }
+}
+
+function pomoEnd(){
+  clearInterval(P.iv);P.running=false;
+  const lbl={work:'Focus',short:'Short Break',long:'Long Break'};
+  const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(P.phase==='work'){
+    P.sessions++;P.streak++;
+    P.totalMins+=parseInt(document.getElementById('pw-dur').value||25);
+  }else{P.streak=0;}
+  P.log.unshift({type:P.phase,time:now,label:lbl[P.phase]});
+  if(P.log.length>20)P.log.pop();
+  const le=parseInt(document.getElementById('pl-ev').value||4);
+  P.phase=P.phase==='work'?(P.sessions%le===0?'long':'short'):'work';
+  const d=pDur();P.total=P.remaining=d[P.phase];
+  pRenderLog();pRender();
+  document.getElementById('pomo-btn').textContent='▶ Start';
+  if('Notification'in window&&Notification.permission==='granted')
+    new Notification('DigitDetox',{body:lbl[P.phase]+' starting!'});
+  else if('Notification'in window)Notification.requestPermission();
+  const auto=parseInt(document.getElementById('pomo-auto').value||0);
+  if(auto===1||(auto===2&&P.phase!=='work'))
+    setTimeout(()=>{if(!P.running)pomoToggle();},1500);
+}
+
+function pomoReset(){
+  clearInterval(P.iv);P.running=false;P.phase='work';
+  const d=pDur();P.total=P.remaining=d.work;
+  document.getElementById('pomo-btn').textContent='▶ Start';
+  pRender();
+}
+function pomoSkip(){clearInterval(P.iv);P.running=false;pomoEnd();}
+
+function pRenderLog(){
+  const el=document.getElementById('pomo-log');
+  if(!P.log.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">No sessions yet.</div>';return;}
+  const cls={work:'se-work',short:'se-break',long:'se-long'};
+  el.innerHTML=P.log.map(e=>
+    `<div class="session-entry"><span class="se-type ${cls[e.type]}">${e.label}</span><span style="color:var(--muted)">${e.time}</span></div>`
+  ).join('');
+}
+pRender();
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+load();
+setInterval(load, 30000);
+loadEmotion();
+setInterval(loadEmotion, 2000);   // poll emotion tracker every 2s
+dmApply();
+</script>
+</body>
+</html>
